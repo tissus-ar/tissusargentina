@@ -13,6 +13,7 @@ import { Textarea } from '@/core/components/ui/textarea'
 import { useCategoryMutations } from '@/core/hooks/queries/useCategoriesQueries'
 import { uploadCategoryImage } from '@/core/services/api'
 import { slugify } from '@/core/lib/utils'
+import { compressImage } from '@/core/lib/image'
 import { 
   Sparkles, 
   Layers, 
@@ -68,7 +69,8 @@ export function CategoryFormSheet({ category, open, onClose }) {
     try {
       let image_url = category?.image_url || null
       if (imageFile) {
-        image_url = await uploadCategoryImage(imageFile, category?.id)
+        const compressed = await compressImage(imageFile)
+        image_url = await uploadCategoryImage(compressed, category?.id)
       }
       const payload = { ...values, slug: slugify(values.name), image_url }
       if (isEditing) {

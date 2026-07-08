@@ -17,6 +17,7 @@ import { X, Upload, GripVertical } from 'lucide-react'
 import { Button } from '@/core/components/ui/button'
 import { uploadProductImage } from '@/core/services/api'
 import { cn } from '@/core/lib/utils'
+import { compressImage } from '@/core/lib/image'
 
 function SortableImage({ url, onRemove, isFirst }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: url })
@@ -79,8 +80,11 @@ export function ImageUploader({ productId, images = [], onChange }) {
     if (!files || files.length === 0) return
     setUploading(true)
     try {
+      const compressedFiles = await Promise.all(
+        Array.from(files).map((f) => compressImage(f))
+      )
       const urls = await Promise.all(
-        Array.from(files).map((f) => uploadProductImage(f, productId || 'temp'))
+        compressedFiles.map((f) => uploadProductImage(f, productId || 'temp'))
       )
       onChange([...images, ...urls])
     } finally {
