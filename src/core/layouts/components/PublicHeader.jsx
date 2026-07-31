@@ -64,24 +64,24 @@ export function PublicHeader() {
           {session ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800">
                   <User className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem onClick={() => navigate(APP_ROUTES.ACCOUNT())}>
-                  <User className="mr-2 h-4 w-4" /> Mi cuenta
+                  <User className="mr-2 h-4 w-4 text-muted-foreground" /> Mi cuenta
                 </DropdownMenuItem>
                 {isAdmin && (
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => navigate(APP_ROUTES.ADMIN.DASHBOARD())}>
-                      <Settings className="mr-2 h-4 w-4" /> Panel admin
+                      <Settings className="mr-2 h-4 w-4 text-muted-foreground" /> Panel admin
                     </DropdownMenuItem>
                   </>
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+                <DropdownMenuItem onClick={handleLogout} className="text-destructive font-medium">
                   <LogOut className="mr-2 h-4 w-4" /> Cerrar sesión
                 </DropdownMenuItem>
               </DropdownMenuContent>

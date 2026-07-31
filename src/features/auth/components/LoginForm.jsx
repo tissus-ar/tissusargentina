@@ -71,18 +71,7 @@ export function LoginForm({ onForgotPassword }) {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="password">Contraseña</Label>
-          <button
-            type="button"
-            onClick={onForgotPassword}
-            className="text-xs text-primary hover:underline"
-            disabled={isSubmitting}
-          >
-            ¿Olvidaste tu contraseña?
-          </button>
-        </div>
-        <div className="relative flex items-center">
+        <div className="relative flex items-center order-2">
           <Input
             id="password"
             type={showPassword ? 'text' : 'password'}
@@ -95,6 +84,7 @@ export function LoginForm({ onForgotPassword }) {
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
+            tabIndex={-1}
             className="absolute right-3 text-muted-foreground hover:text-foreground transition-colors p-0.5 rounded focus:outline-none focus:ring-1 focus:ring-ring"
             disabled={isSubmitting}
             title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
@@ -102,7 +92,18 @@ export function LoginForm({ onForgotPassword }) {
             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         </div>
-        {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
+        <div className="flex items-center justify-between order-1">
+          <Label htmlFor="password">Contraseña</Label>
+          <button
+            type="button"
+            onClick={onForgotPassword}
+            className="text-xs text-primary hover:underline"
+            disabled={isSubmitting}
+          >
+            ¿Olvidaste tu contraseña?
+          </button>
+        </div>
+        {errors.password && <p className="text-xs text-destructive order-3">{errors.password.message}</p>}
       </div>
 
       <Button type="submit" disabled={isSubmitting} className="w-full mt-2">

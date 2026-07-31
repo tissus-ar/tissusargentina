@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { Link } from 'react-router-dom'
-import { ShoppingBag, User, History, Phone, Mail, Loader2, MessageSquare } from 'lucide-react'
+import { ShoppingBag, User, History, Phone, Mail, Loader2, MessageSquare, KeyRound } from 'lucide-react'
 import { Button } from '@/core/components/ui/button'
 import { Input } from '@/core/components/ui/input'
 import { Label } from '@/core/components/ui/label'
@@ -13,6 +13,7 @@ import { useAuth } from '@/core/context/AuthContext'
 import { useUserRequests } from '@/core/hooks/queries/useContactRequestsQueries'
 import { updateProfile } from '@/core/services/api'
 import { RequestStatusBadge } from '@/features/admin-requests/components/RequestStatusBadge'
+import { ChangePasswordForm } from '@/features/auth/components/ChangePasswordForm'
 import { formatDate, formatPrice } from '@/core/lib/utils'
 import { APP_ROUTES } from '@/core/lib/routes'
 import { cn } from '@/core/lib/utils'
@@ -68,6 +69,18 @@ export default function AccountPage() {
         >
           <User className="h-4 w-4" />
           Mis Datos
+        </button>
+        <button
+          onClick={() => setTab('seguridad')}
+          className={cn(
+            'flex items-center gap-2 px-4 py-2.5 text-sm font-medium -mb-px border-b-2 transition-all duration-200',
+            tab === 'seguridad'
+              ? 'border-primary text-foreground font-semibold'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          )}
+        >
+          <KeyRound className="h-4 w-4" />
+          Seguridad
         </button>
         <button
           onClick={() => setTab('compras')}
@@ -126,6 +139,21 @@ export default function AccountPage() {
               )}
             </Button>
           </form>
+        </div>
+      )}
+
+      {/* Tab Seguridad / Cambiar contraseña */}
+      {tab === 'seguridad' && (
+        <div className="rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-6 shadow-xs animate-in fade-in duration-300">
+          <div className="flex flex-col gap-1 mb-5 max-w-md">
+            <h2 className="font-semibold text-base">Cambiar contraseña</h2>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Ingresá tu nueva contraseña a continuación. Recordá elegir una combinación segura y diferente a la actual.
+            </p>
+          </div>
+          <div className="max-w-md">
+            <ChangePasswordForm />
+          </div>
         </div>
       )}
 
