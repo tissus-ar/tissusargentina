@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Plus, Upload } from 'lucide-react'
 import { Button } from '@/core/components/ui/button'
 import { Input } from '@/core/components/ui/input'
@@ -24,6 +25,16 @@ export default function AdminProductsPage() {
   const [csvOpen, setCsvOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState('name_asc')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const filterBy = searchParams.get('filter') || 'all'
+
+  const setFilterBy = (val) => {
+    setSearchParams(prev => {
+      if (val === 'all') prev.delete('filter')
+      else prev.set('filter', val)
+      return prev
+    }, { replace: true })
+  }
   
   // Defer heavy rendering so navigation is instant and loader can be seen
   const [visibleCount, setVisibleCount] = useState(20)
@@ -36,6 +47,13 @@ export default function AdminProductsPage() {
 
   const filtered = useMemo(() => {
     let result = products ? [...products] : []
+    if (filterBy === 'active') {
+      result = result.filter((p) => p.is_active)
+    } else if (filterBy === 'inactive') {
+      result = result.filter((p) => !p.is_active)
+    } else if (filterBy === 'no-stock') {
+      result = result.filter((p) => p.is_active && p.stock === 0)
+    }
     if (search) {
       result = result.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
     }
@@ -46,7 +64,7 @@ export default function AdminProductsPage() {
       return 0
     })
     return result
-  }, [products, search, sortBy])
+  }, [products, search, sortBy, filterBy])
 
   const handleEdit = (product) => {
     setEditProduct(product)
@@ -87,9 +105,20 @@ export default function AdminProductsPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-xs"
         />
-        <div className="w-full sm:w-48">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          <Select value={filterBy} onValueChange={setFilterBy}>
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue placeholder="Filtrar por estado" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los estados</SelectItem>
+              <SelectItem value="active">Activos</SelectItem>
+              <SelectItem value="no-stock">Sin stock (Activos)</SelectItem>
+              <SelectItem value="inactive">Inactivos</SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger>
+            <SelectTrigger className="w-full sm:w-48">
               <SelectValue placeholder="Ordenar por" />
             </SelectTrigger>
             <SelectContent>

@@ -1,13 +1,18 @@
+import { useNavigate } from 'react-router-dom'
 import { AlertCircle, Package, MessageSquare, Archive } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/core/components/ui/card'
 import { Skeleton } from '@/core/components/ui/skeleton'
 import { useAdminProducts } from '@/core/hooks/queries/useProductsQueries'
 import { useAdminRequests } from '@/core/hooks/queries/useContactRequestsQueries'
 import { PromotionSettingsCard } from './components/PromotionSettingsCard'
+import { APP_ROUTES } from '@/core/lib/routes'
 
-function StatCard({ title, value, icon: Icon, description, loading, indicator }) {
+function StatCard({ title, value, icon: Icon, description, loading, indicator, onClick }) {
   return (
-    <Card>
+    <Card
+      onClick={onClick}
+      className={onClick ? "cursor-pointer transition-all duration-200 hover:shadow-md hover:border-primary/50 active:scale-[0.98]" : ""}
+    >
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
         <div className="relative">
@@ -33,6 +38,7 @@ function StatCard({ title, value, icon: Icon, description, loading, indicator })
 }
 
 export default function AdminDashboard() {
+  const navigate = useNavigate()
   const { data: products, isLoading: productsLoading } = useAdminProducts()
   const { data: requests, isLoading: requestsLoading } = useAdminRequests()
 
@@ -56,12 +62,14 @@ export default function AdminDashboard() {
           description="Pendientes y en contacto"
           loading={requestsLoading}
           indicator={activeRequests > 0}
+          onClick={() => navigate(APP_ROUTES.ADMIN.REQUESTS())}
         />
         <StatCard
           title="Productos activos"
           value={totalProducts}
           icon={Package}
           loading={productsLoading}
+          onClick={() => navigate(`${APP_ROUTES.ADMIN.PRODUCTS()}?filter=active`)}
         />
         <StatCard
           title="Sin stock"
@@ -69,6 +77,7 @@ export default function AdminDashboard() {
           icon={AlertCircle}
           description="Activos en 0"
           loading={productsLoading}
+          onClick={() => navigate(`${APP_ROUTES.ADMIN.PRODUCTS()}?filter=no-stock`)}
         />
         <StatCard
           title="Inactivos"
@@ -76,6 +85,7 @@ export default function AdminDashboard() {
           icon={Archive}
           description="Ocultos al público"
           loading={productsLoading}
+          onClick={() => navigate(`${APP_ROUTES.ADMIN.PRODUCTS()}?filter=inactive`)}
         />
       </div>
 
