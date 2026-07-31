@@ -4,17 +4,18 @@ import { ArrowLeft } from 'lucide-react'
 import { LoginForm } from '@/features/auth/components/LoginForm'
 import { RegisterForm } from '@/features/auth/components/RegisterForm'
 import { ForgotForm } from '@/features/auth/components/ForgotForm'
+import { ResetPasswordForm } from '@/features/auth/components/ResetPasswordForm'
 import { useAuth } from '@/core/context/AuthContext'
 import { APP_ROUTES } from '@/core/lib/routes'
 import { cn } from '@/core/lib/utils'
 import { Toaster } from '@/core/components/ui/sonner'
 
 export default function LoginPage() {
-  const { session } = useAuth()
+  const { session, isPasswordRecovery } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const [tab, setTab] = useState(() => {
     const t = searchParams.get('tab')
-    return (t === 'register' || t === 'forgot') ? t : 'login'
+    return (t === 'register' || t === 'forgot' || t === 'reset-password') ? t : 'login'
   })
 
   // Sync tab changes to URL search parameters for linkability
@@ -29,7 +30,16 @@ export default function LoginPage() {
     }
   }, [tab, searchParams, setSearchParams])
 
-  if (session) return <Navigate to={APP_ROUTES.HOME()} replace />
+  // Automatically switch to reset-password tab if password recovery event was detected
+  useEffect(() => {
+    if (isPasswordRecovery && tab !== 'reset-password') {
+      setTab('reset-password')
+    }
+  }, [isPasswordRecovery, tab])
+
+  if (session && tab !== 'reset-password' && !isPasswordRecovery) {
+    return <Navigate to={APP_ROUTES.HOME()} replace />
+  }
 
   const getHeaderText = () => {
     switch (tab) {
@@ -42,6 +52,11 @@ export default function LoginPage() {
         return {
           title: 'Recuperar contraseña',
           subtitle: 'Te enviaremos un correo con las instrucciones para restablecer tu cuenta.',
+        }
+      case 'reset-password':
+        return {
+          title: 'Crear nueva contraseña',
+          subtitle: 'Elegí una nueva contraseña segura para proteger tu cuenta de Tissus.',
         }
       case 'login':
       default:
@@ -121,7 +136,7 @@ export default function LoginPage() {
             </div>
 
             {/* Tab selector (Only visible for Login / Register) */}
-            {tab !== 'forgot' && (
+            {tab !== 'forgot' && tab !== 'reset-password' && (
               <div className="grid w-full grid-cols-2 rounded-lg bg-muted p-1 text-muted-foreground mb-6">
                 <button
                   onClick={() => setTab('login')}
@@ -158,6 +173,9 @@ export default function LoginPage() {
               )}
               {tab === 'forgot' && (
                 <ForgotForm onBackToLogin={() => setTab('login')} />
+              )}
+              {tab === 'reset-password' && (
+                <ResetPasswordForm />
               )}
             </div>
           </div>

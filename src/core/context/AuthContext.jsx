@@ -9,6 +9,9 @@ export const AuthProvider = ({ children }) => {
   const [userProfile, setUserProfile] = useState(null)
   const [isAuthLoading, setIsAuthLoading] = useState(true)
   const [isProfileLoading, setIsProfileLoading] = useState(true)
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(() => {
+    return window.location.hash.includes('type=recovery') || window.location.search.includes('tab=reset-password')
+  })
   const lastUserIdRef = React.useRef(null)
 
   const fetchProfile = async (userId, isInitial = false) => {
@@ -37,6 +40,9 @@ export const AuthProvider = ({ children }) => {
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsPasswordRecovery(true)
+      }
       const hasUserChanged = newSession?.user?.id !== lastUserIdRef.current
       setSession(newSession)
       setIsAuthLoading(false)
@@ -67,6 +73,8 @@ export const AuthProvider = ({ children }) => {
       isProfileComplete,
       isAuthLoading,
       isProfileLoading,
+      isPasswordRecovery,
+      setIsPasswordRecovery,
       logout,
       fetchProfile,
     }}>
