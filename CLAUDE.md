@@ -1,5 +1,9 @@
 # CLAUDE.md
 
+## Pendientes
+GitHub Issues del repo (`tissus-ar/tissusargentina`) es la fuente de verdad de pendientes —
+`gh issue list --state open`.
+
 ## Stack (verificado en `package.json`)
 - React 19.2.4 + Vite 8.0.1 (JSX puro, sin TypeScript — hay `@types/*` como devDependencies
   y un `jsconfig.json` con paths, pero es solo para autocompletado/IntelliSense; no hay
