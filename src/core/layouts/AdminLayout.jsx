@@ -5,13 +5,17 @@ import { AdminSidebar } from './components/AdminSidebar'
 import { AdminBottomNav } from './components/AdminBottomNav'
 import { AdminHeader } from './components/AdminHeader'
 
-export function AdminLayout() {
-  const Loader = () => (
+// Definido a nivel de módulo a propósito: si vive dentro del cuerpo de AdminLayout, React lo trata
+// como un componente distinto en cada render y remonta el subárbol del Suspense, perdiendo su estado.
+function Loader() {
+  return (
     <div className="flex items-center justify-center min-h-[40vh] text-muted-foreground">
       Cargando...
     </div>
   )
+}
 
+export function AdminLayout() {
   return (
     <div className="flex h-screen overflow-hidden relative bg-zinc-50/50 dark:bg-zinc-900/30">
       <AdminSidebar />

@@ -34,7 +34,10 @@ const schema = z.object({
 export function CategoryFormSheet({ category, open, onClose }) {
   const { create, update } = useCategoryMutations()
   const [imageFile, setImageFile] = useState(null)
-  const [preview, setPreview] = useState(category?.image_url || '')
+  // `previewDraft` vale null mientras no se eligió un archivo nuevo: el preview sale directo de la
+  // categoría, así que abrir el sheet ya muestra su banner sin copiarlo al estado en un efecto.
+  const [previewDraft, setPreviewDraft] = useState(null)
+  const preview = previewDraft ?? (category?.image_url || '')
   const isEditing = Boolean(category)
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
@@ -46,6 +49,8 @@ export function CategoryFormSheet({ category, open, onClose }) {
     },
   })
 
+  // `reset` es una API imperativa de react-hook-form (estado externo a React), no un setState:
+  // sincronizar el form con la categoría al abrir es justamente para lo que sirve un efecto.
   useEffect(() => {
     if (open) {
       reset({
@@ -53,16 +58,22 @@ export function CategoryFormSheet({ category, open, onClose }) {
         description: category?.description || '',
         position: category?.position ?? 0,
       })
-      setPreview(category?.image_url || '')
-      setImageFile(null)
     }
   }, [open, category, reset])
+
+  // El sheet no se desmonta al cerrarse (Radix lo mantiene para animar la salida), así que la
+  // imagen elegida se descarta acá; si no, reabrirlo con otra categoría mostraría la anterior.
+  const handleClose = () => {
+    setPreviewDraft(null)
+    setImageFile(null)
+    onClose()
+  }
 
   const handleImageChange = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
     setImageFile(file)
-    setPreview(URL.createObjectURL(file))
+    setPreviewDraft(URL.createObjectURL(file))
   }
 
   const onSubmit = async (values) => {
@@ -80,14 +91,14 @@ export function CategoryFormSheet({ category, open, onClose }) {
         await create.mutateAsync(payload)
         toast.success('Categoría creada con éxito')
       }
-      onClose()
+      handleClose()
     } catch (e) {
       toast.error(e.message || 'Error al guardar la categoría')
     }
   }
 
   return (
-    <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
+    <Sheet open={open} onOpenChange={(o) => !o && handleClose()}>
       <SheetContent className="w-full sm:max-w-xl h-full flex flex-col p-0 gap-0 overflow-hidden">
         <SheetHeader className="px-6 py-5 border-b border-border flex-shrink-0">
           <SheetTitle className="text-lg font-bold flex items-center gap-2">
@@ -188,7 +199,7 @@ export function CategoryFormSheet({ category, open, onClose }) {
         </form>
 
         <SheetFooter className="px-6 py-4 border-t border-border bg-muted/20 dark:bg-muted/10 flex-shrink-0 flex-row justify-end gap-3 mt-0">
-          <Button variant="outline" type="button" onClick={onClose} disabled={isSubmitting}>
+          <Button variant="outline" type="button" onClick={handleClose} disabled={isSubmitting}>
             Cancelar
           </Button>
           <Button type="submit" disabled={isSubmitting} onClick={handleSubmit(onSubmit)} className="min-w-[120px]">

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/core/components/ui/card'
 import { Button } from '@/core/components/ui/button'
 import { Input } from '@/core/components/ui/input'
@@ -6,34 +6,33 @@ import { Label } from '@/core/components/ui/label'
 import { useStoreSettings, useUpdateStoreSettings } from '@/core/hooks/queries/useSettingsQueries'
 import { Megaphone, Save } from 'lucide-react'
 
+const DEFAULT_SETTINGS = {
+  promo_active: false,
+  promo_min_amount: 120000,
+  promo_discount_percentage: 15,
+  promo_installments: 3
+}
+
 export function PromotionSettingsCard() {
   const { data: settings, isLoading } = useStoreSettings()
   const { mutate: updateSettings, isPending } = useUpdateStoreSettings()
 
-  const [formData, setFormData] = useState({
-    promo_active: false,
-    promo_min_amount: 120000,
-    promo_discount_percentage: 15,
-    promo_installments: 3
-  })
-
-  useEffect(() => {
-    if (settings) {
-      setFormData(settings)
-    }
-  }, [settings])
+  // `draft` vale null mientras el admin no tocó nada: el form muestra lo que hay guardado y se
+  // actualiza solo si la query revalida. Solo pasa a no-null al editar, y vuelve a null al guardar.
+  const [draft, setDraft] = useState(null)
+  const formData = draft ?? settings ?? DEFAULT_SETTINGS
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
-    setFormData(prev => ({
-      ...prev,
+    setDraft({
+      ...formData,
       [name]: type === 'checkbox' ? checked : Number(value)
-    }))
+    })
   }
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    updateSettings(formData)
+    updateSettings(formData, { onSuccess: () => setDraft(null) })
   }
 
   if (isLoading) return <div>Cargando...</div>

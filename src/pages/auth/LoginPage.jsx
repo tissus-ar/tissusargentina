@@ -13,10 +13,15 @@ import { Toaster } from '@/core/components/ui/sonner'
 export default function LoginPage() {
   const { session, isPasswordRecovery } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [tab, setTab] = useState(() => {
+  const [selectedTab, setSelectedTab] = useState(() => {
     const t = searchParams.get('tab')
     return (t === 'register' || t === 'forgot' || t === 'reset-password') ? t : 'login'
   })
+
+  // El flujo de recuperación manda sobre la pestaña elegida a mano: mientras esté activo, la
+  // pantalla es la de reset. Derivarlo en vez de forzarlo desde un efecto evita el render
+  // intermedio en el que se veía el login antes de que el efecto corrigiera la pestaña.
+  const tab = isPasswordRecovery ? 'reset-password' : selectedTab
 
   // Sync tab changes to URL search parameters for linkability
   useEffect(() => {
@@ -29,13 +34,6 @@ export default function LoginPage() {
       setSearchParams({ tab })
     }
   }, [tab, searchParams, setSearchParams])
-
-  // Automatically switch to reset-password tab if password recovery event was detected
-  useEffect(() => {
-    if (isPasswordRecovery && tab !== 'reset-password') {
-      setTab('reset-password')
-    }
-  }, [isPasswordRecovery, tab])
 
   if (session && tab !== 'reset-password' && !isPasswordRecovery) {
     return <Navigate to={APP_ROUTES.HOME()} replace />
@@ -139,7 +137,7 @@ export default function LoginPage() {
             {tab !== 'forgot' && tab !== 'reset-password' && (
               <div className="grid w-full grid-cols-2 rounded-lg bg-muted p-1 text-muted-foreground mb-6">
                 <button
-                  onClick={() => setTab('login')}
+                  onClick={() => setSelectedTab('login')}
                   className={cn(
                     "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-all focus-visible:outline-none",
                     tab === 'login'
@@ -150,7 +148,7 @@ export default function LoginPage() {
                   Ingresar
                 </button>
                 <button
-                  onClick={() => setTab('register')}
+                  onClick={() => setSelectedTab('register')}
                   className={cn(
                     "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-all focus-visible:outline-none",
                     tab === 'register'
@@ -166,13 +164,13 @@ export default function LoginPage() {
             {/* Dynamic Form Content */}
             <div className="relative">
               {tab === 'login' && (
-                <LoginForm onForgotPassword={() => setTab('forgot')} />
+                <LoginForm onForgotPassword={() => setSelectedTab('forgot')} />
               )}
               {tab === 'register' && (
-                <RegisterForm onSwitchToLogin={() => setTab('login')} />
+                <RegisterForm onSwitchToLogin={() => setSelectedTab('login')} />
               )}
               {tab === 'forgot' && (
-                <ForgotForm onBackToLogin={() => setTab('login')} />
+                <ForgotForm onBackToLogin={() => setSelectedTab('login')} />
               )}
               {tab === 'reset-password' && (
                 <ResetPasswordForm />

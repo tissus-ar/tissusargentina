@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { toast } from 'sonner'
 import { Pencil, Trash2, Eye, EyeOff, Star, Image as ImageIcon, Loader2 } from 'lucide-react'
 import { Button } from '@/core/components/ui/button'
@@ -17,27 +17,28 @@ import {
   SelectValue,
 } from '@/core/components/ui/select'
 
+// `local` vale null en reposo: el valor mostrado sale directo de la prop, así que un cambio
+// externo (realtime / refetch) se refleja solo, sin efecto de sincronización. Solo deja de ser
+// null mientras se edita o mientras hay una mutación optimista en vuelo.
 function StockCell({ product }) {
   const { update } = useProductMutations()
-  const [value, setValue] = useState(product.stock)
+  const [local, setLocal] = useState(null)
   const [editing, setEditing] = useState(false)
-
-  // Keep state in sync if product stock changes externally
-  useEffect(() => {
-    setValue(product.stock)
-  }, [product.stock])
+  const value = local ?? product.stock
 
   const save = async () => {
     setEditing(false)
-    if (Number(value) !== product.stock) {
+    const numericValue = Number(value)
+    if (numericValue !== product.stock) {
+      setLocal(numericValue)
       try {
-        await update.mutateAsync({ id: product.id, stock: Number(value) })
+        await update.mutateAsync({ id: product.id, stock: numericValue })
         toast.success('Stock actualizado')
       } catch {
-        setValue(product.stock)
         toast.error('Error al actualizar stock')
       }
     }
+    setLocal(null)
   }
 
   if (editing) {
@@ -46,9 +47,9 @@ function StockCell({ product }) {
         type="number"
         min="0"
         value={value}
-        onChange={(e) => setValue(e.target.value)}
+        onChange={(e) => setLocal(e.target.value)}
         onBlur={save}
-        onKeyDown={(e) => e.key === 'Enter' && save()}
+        onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
         className="w-20 h-7 text-xs ml-auto"
         autoFocus
       />
@@ -56,33 +57,34 @@ function StockCell({ product }) {
   }
 
   return (
-    <button onClick={() => setEditing(true)} className="text-sm hover:underline underline-offset-2">
-      {product.stock}
+    <button
+      onClick={() => { setLocal(product.stock); setEditing(true) }}
+      className="text-sm hover:underline underline-offset-2"
+    >
+      {value}
     </button>
   )
 }
 
 function PriceCell({ product }) {
   const { update } = useProductMutations()
-  const [value, setValue] = useState(product.price)
+  const [local, setLocal] = useState(null)
   const [editing, setEditing] = useState(false)
-
-  // Keep state in sync if product price changes externally
-  useEffect(() => {
-    setValue(product.price)
-  }, [product.price])
+  const value = local ?? product.price
 
   const save = async () => {
     setEditing(false)
-    if (Number(value) !== product.price) {
+    const numericValue = Number(value)
+    if (numericValue !== product.price) {
+      setLocal(numericValue)
       try {
-        await update.mutateAsync({ id: product.id, price: Number(value) })
+        await update.mutateAsync({ id: product.id, price: numericValue })
         toast.success('Precio actualizado')
       } catch {
-        setValue(product.price)
         toast.error('Error al actualizar precio')
       }
     }
+    setLocal(null)
   }
 
   if (editing) {
@@ -92,9 +94,9 @@ function PriceCell({ product }) {
         min="0"
         step="0.01"
         value={value}
-        onChange={(e) => setValue(e.target.value)}
+        onChange={(e) => setLocal(e.target.value)}
         onBlur={save}
-        onKeyDown={(e) => e.key === 'Enter' && save()}
+        onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
         className="w-24 h-7 text-xs ml-auto"
         autoFocus
       />
@@ -102,31 +104,30 @@ function PriceCell({ product }) {
   }
 
   return (
-    <button onClick={() => setEditing(true)} className="text-sm font-medium hover:underline underline-offset-2">
-      {formatPrice(product.price)}
+    <button
+      onClick={() => { setLocal(product.price); setEditing(true) }}
+      className="text-sm font-medium hover:underline underline-offset-2"
+    >
+      {formatPrice(value)}
     </button>
   )
 }
 
 function CategoryCell({ product, categories }) {
   const { update } = useProductMutations()
-  const [value, setValue] = useState(product.category_id || 'none')
-
-  // Keep state in sync if product category changes externally
-  useEffect(() => {
-    setValue(product.category_id || 'none')
-  }, [product.category_id])
+  const [local, setLocal] = useState(null)
+  const value = local ?? (product.category_id || 'none')
 
   const handleCategoryChange = async (newCategoryId) => {
-    const prevValue = value
-    setValue(newCategoryId)
+    setLocal(newCategoryId)
     const categoryId = newCategoryId === 'none' ? null : newCategoryId
     try {
       await update.mutateAsync({ id: product.id, category_id: categoryId })
       toast.success('Categoría actualizada')
     } catch {
-      setValue(prevValue)
       toast.error('Error al actualizar categoría')
+    } finally {
+      setLocal(null)
     }
   }
 
@@ -151,22 +152,19 @@ function CategoryCell({ product, categories }) {
 
 function FeaturedCell({ product }) {
   const { update } = useProductMutations()
-  const [featured, setFeatured] = useState(product.is_featured)
-
-  // Keep state in sync if product featured state changes externally
-  useEffect(() => {
-    setFeatured(product.is_featured)
-  }, [product.is_featured])
+  const [local, setLocal] = useState(null)
+  const featured = local ?? product.is_featured
 
   const handleToggleFeatured = async (e) => {
     const isChecked = e.target.checked
-    setFeatured(isChecked)
+    setLocal(isChecked)
     try {
       await update.mutateAsync({ id: product.id, is_featured: isChecked })
       toast.success(isChecked ? 'Marcado como destacado' : 'Removido de destacados')
     } catch {
-      setFeatured(product.is_featured)
       toast.error('Error al actualizar destacados')
+    } finally {
+      setLocal(null)
     }
   }
 
@@ -185,26 +183,23 @@ function FeaturedCell({ product }) {
 
 function PromotionCell({ product }) {
   const { update } = useProductMutations()
-  const [value, setValue] = useState(product.discount_percentage || 0)
+  const [local, setLocal] = useState(null)
   const [editing, setEditing] = useState(false)
-
-  // Keep state in sync if product promotion state changes externally
-  useEffect(() => {
-    setValue(product.discount_percentage || 0)
-  }, [product.discount_percentage])
+  const value = local ?? (product.discount_percentage || 0)
 
   const save = async () => {
     setEditing(false)
     const numericValue = Number(value)
     if (numericValue !== (product.discount_percentage || 0)) {
+      setLocal(numericValue)
       try {
         await update.mutateAsync({ id: product.id, discount_percentage: numericValue })
         toast.success(numericValue > 0 ? `Descuento del ${numericValue}% aplicado` : 'Descuento removido')
       } catch {
-        setValue(product.discount_percentage || 0)
         toast.error('Error al actualizar descuento')
       }
     }
+    setLocal(null)
   }
 
   if (editing) {
@@ -215,9 +210,9 @@ function PromotionCell({ product }) {
           min="0"
           max="100"
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => setLocal(e.target.value)}
           onBlur={save}
-          onKeyDown={(e) => e.key === 'Enter' && save()}
+          onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
           className="w-16 h-7 text-xs text-center"
           autoFocus
         />
@@ -230,8 +225,8 @@ function PromotionCell({ product }) {
 
   return (
     <div className="flex items-center justify-center">
-      <button 
-        onClick={() => setEditing(true)} 
+      <button
+        onClick={() => { setLocal(product.discount_percentage || 0); setEditing(true) }}
         className={`text-sm hover:underline underline-offset-2 px-2 py-0.5 rounded ${hasDiscount ? 'bg-red-500/10 text-red-500 font-bold' : 'text-muted-foreground'}`}
       >
         {hasDiscount ? `-${value}%` : '0%'}

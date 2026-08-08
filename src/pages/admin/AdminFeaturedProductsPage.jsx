@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useMemo, useState } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -72,16 +72,18 @@ function SortableItem({ id, product }) {
 
 export default function AdminFeaturedProductsPage() {
   const { data: featuredProducts, isLoading } = useFeaturedProducts()
-  const [items, setItems] = useState([])
+  // `reordered` vale null mientras no se arrastró nada: la lista sale directo de la query, así que
+  // los destacados ya guardados se ven al entrar sin un efecto que los copie al estado.
+  const [reordered, setReordered] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
   const { update } = useProductMutations()
 
-  useEffect(() => {
-    if (featuredProducts) {
-      // Sort items by their featured_order if they have it
-      setItems([...featuredProducts].sort((a, b) => (a.featured_order || 0) - (b.featured_order || 0)))
-    }
-  }, [featuredProducts])
+  // Sort items by their featured_order if they have it
+  const sorted = useMemo(
+    () => [...(featuredProducts || [])].sort((a, b) => (a.featured_order || 0) - (b.featured_order || 0)),
+    [featuredProducts]
+  )
+  const items = reordered ?? sorted
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -94,11 +96,9 @@ export default function AdminFeaturedProductsPage() {
     const { active, over } = event
 
     if (active.id !== over.id) {
-      setItems((items) => {
-        const oldIndex = items.findIndex((i) => i.id === active.id)
-        const newIndex = items.findIndex((i) => i.id === over.id)
-        return arrayMove(items, oldIndex, newIndex)
-      })
+      const oldIndex = items.findIndex((i) => i.id === active.id)
+      const newIndex = items.findIndex((i) => i.id === over.id)
+      setReordered(arrayMove(items, oldIndex, newIndex))
     }
   }
 
@@ -121,7 +121,9 @@ export default function AdminFeaturedProductsPage() {
       if (items.length > 0) {
         await update.mutateAsync({ id: items[0].id, featured_order: 1 })
       }
-      
+
+      // El orden ya está persistido: se descarta el borrador y la lista vuelve a salir de la query.
+      setReordered(null)
       toast.success('Orden actualizado con éxito')
     } catch (error) {
       console.error(error)

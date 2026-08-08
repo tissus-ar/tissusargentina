@@ -24,13 +24,17 @@ function WhatsAppFab() {
   )
 }
 
-export function PublicLayout() {
-  const Loader = () => (
+// Definido a nivel de módulo a propósito: si vive dentro del cuerpo de PublicLayout, React lo trata
+// como un componente distinto en cada render y remonta el subárbol del Suspense, perdiendo su estado.
+function Loader() {
+  return (
     <div className="flex items-center justify-center min-h-[40vh] text-muted-foreground">
       Cargando...
     </div>
   )
+}
 
+export function PublicLayout() {
   return (
     <div className="min-h-screen flex flex-col">
       <div className="sticky top-0 z-[60] w-full flex flex-col">
