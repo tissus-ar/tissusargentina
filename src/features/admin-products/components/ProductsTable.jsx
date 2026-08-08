@@ -9,6 +9,7 @@ import { useConfirm } from '@/core/context/ConfirmContext'
 import { useProductMutations } from '@/core/hooks/queries/useProductsQueries'
 import { useAdminCategories } from '@/core/hooks/queries/useCategoriesQueries'
 import { formatPrice } from '@/core/lib/utils'
+import { useEditableCell } from '../hooks/useEditableCell'
 import {
   Select,
   SelectContent,
@@ -17,48 +18,29 @@ import {
   SelectValue,
 } from '@/core/components/ui/select'
 
-// `local` vale null en reposo: el valor mostrado sale directo de la prop, así que un cambio
-// externo (realtime / refetch) se refleja solo, sin efecto de sincronización. Solo deja de ser
-// null mientras se edita o mientras hay una mutación optimista en vuelo.
+// El estado nullable con fallback a la prop y el descarte con Escape viven en `useEditableCell`,
+// compartido por las tres celdas editables (stock, precio y descuento).
 function StockCell({ product }) {
   const { update } = useProductMutations()
-  const [local, setLocal] = useState(null)
-  const [editing, setEditing] = useState(false)
-  const value = local ?? product.stock
-
-  const save = async () => {
-    setEditing(false)
-    const numericValue = Number(value)
-    if (numericValue !== product.stock) {
-      setLocal(numericValue)
+  const { editing, value, startEditing, inputProps } = useEditableCell({
+    current: product.stock,
+    onSave: async (stock) => {
       try {
-        await update.mutateAsync({ id: product.id, stock: numericValue })
+        await update.mutateAsync({ id: product.id, stock })
         toast.success('Stock actualizado')
       } catch {
         toast.error('Error al actualizar stock')
       }
-    }
-    setLocal(null)
-  }
+    },
+  })
 
   if (editing) {
-    return (
-      <Input
-        type="number"
-        min="0"
-        value={value}
-        onChange={(e) => setLocal(e.target.value)}
-        onBlur={save}
-        onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-        className="w-20 h-7 text-xs ml-auto"
-        autoFocus
-      />
-    )
+    return <Input type="number" min="0" className="w-20 h-7 text-xs ml-auto" {...inputProps} />
   }
 
   return (
     <button
-      onClick={() => { setLocal(product.stock); setEditing(true) }}
+      onClick={startEditing}
       className="text-sm hover:underline underline-offset-2"
     >
       {value}
@@ -68,44 +50,27 @@ function StockCell({ product }) {
 
 function PriceCell({ product }) {
   const { update } = useProductMutations()
-  const [local, setLocal] = useState(null)
-  const [editing, setEditing] = useState(false)
-  const value = local ?? product.price
-
-  const save = async () => {
-    setEditing(false)
-    const numericValue = Number(value)
-    if (numericValue !== product.price) {
-      setLocal(numericValue)
+  const { editing, value, startEditing, inputProps } = useEditableCell({
+    current: product.price,
+    onSave: async (price) => {
       try {
-        await update.mutateAsync({ id: product.id, price: numericValue })
+        await update.mutateAsync({ id: product.id, price })
         toast.success('Precio actualizado')
       } catch {
         toast.error('Error al actualizar precio')
       }
-    }
-    setLocal(null)
-  }
+    },
+  })
 
   if (editing) {
     return (
-      <Input
-        type="number"
-        min="0"
-        step="0.01"
-        value={value}
-        onChange={(e) => setLocal(e.target.value)}
-        onBlur={save}
-        onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-        className="w-24 h-7 text-xs ml-auto"
-        autoFocus
-      />
+      <Input type="number" min="0" step="0.01" className="w-24 h-7 text-xs ml-auto" {...inputProps} />
     )
   }
 
   return (
     <button
-      onClick={() => { setLocal(product.price); setEditing(true) }}
+      onClick={startEditing}
       className="text-sm font-medium hover:underline underline-offset-2"
     >
       {formatPrice(value)}
@@ -183,39 +148,26 @@ function FeaturedCell({ product }) {
 
 function PromotionCell({ product }) {
   const { update } = useProductMutations()
-  const [local, setLocal] = useState(null)
-  const [editing, setEditing] = useState(false)
-  const value = local ?? (product.discount_percentage || 0)
-
-  const save = async () => {
-    setEditing(false)
-    const numericValue = Number(value)
-    if (numericValue !== (product.discount_percentage || 0)) {
-      setLocal(numericValue)
+  const { editing, value, startEditing, inputProps } = useEditableCell({
+    current: product.discount_percentage || 0,
+    onSave: async (discount_percentage) => {
       try {
-        await update.mutateAsync({ id: product.id, discount_percentage: numericValue })
-        toast.success(numericValue > 0 ? `Descuento del ${numericValue}% aplicado` : 'Descuento removido')
+        await update.mutateAsync({ id: product.id, discount_percentage })
+        toast.success(
+          discount_percentage > 0
+            ? `Descuento del ${discount_percentage}% aplicado`
+            : 'Descuento removido'
+        )
       } catch {
         toast.error('Error al actualizar descuento')
       }
-    }
-    setLocal(null)
-  }
+    },
+  })
 
   if (editing) {
     return (
       <div className="flex items-center gap-1 justify-center">
-        <Input
-          type="number"
-          min="0"
-          max="100"
-          value={value}
-          onChange={(e) => setLocal(e.target.value)}
-          onBlur={save}
-          onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-          className="w-16 h-7 text-xs text-center"
-          autoFocus
-        />
+        <Input type="number" min="0" max="100" className="w-16 h-7 text-xs text-center" {...inputProps} />
         <span className="text-xs text-muted-foreground">%</span>
       </div>
     )
@@ -226,7 +178,7 @@ function PromotionCell({ product }) {
   return (
     <div className="flex items-center justify-center">
       <button
-        onClick={() => { setLocal(product.discount_percentage || 0); setEditing(true) }}
+        onClick={startEditing}
         className={`text-sm hover:underline underline-offset-2 px-2 py-0.5 rounded ${hasDiscount ? 'bg-red-500/10 text-red-500 font-bold' : 'text-muted-foreground'}`}
       >
         {hasDiscount ? `-${value}%` : '0%'}
