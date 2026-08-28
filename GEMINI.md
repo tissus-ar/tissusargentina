@@ -10,7 +10,7 @@ GitHub Issues del repo (`tissus-ar/tissusargentina`) es la fuente de verdad.
 - TanStack Query 5.100.5 para fetching. React Router DOM 7.14.
 - Supabase: DB + Auth + Storage + Realtime directo desde cliente.
 - React Hook Form 7.57 + zod en formularios.
-- `radix-ui` unificado, Papaparse, `dnd-kit`, `date-fns`, `sonner`, `next-themes`.
+- `radix-ui` unificado, Papaparse, `dnd-kit`, `sonner`, `next-themes`.
 
 ## Comandos
 | Comando | Qué hace |
