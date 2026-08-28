@@ -21,7 +21,7 @@ GitHub Issues del repo (`tissus-ar/tissusargentina`) es la fuente de verdad de p
   producto, categoría, contacto).
 - `radix-ui` 1.4.3 (paquete unificado, no primitivos sueltos `@radix-ui/react-*`), Papaparse
   + `xlsx` (import CSV/Excel de productos), `@dnd-kit/*` (reordenar destacados),
-  `date-fns`, `sonner` (toasts), `next-themes`.
+  `sonner` (toasts), `next-themes`.
 
 **Diferencias contra lo que decía el plan de estandarización**: coinciden React 19,
 Vite 8, Tailwind 4, shadcn, TanStack Query, Supabase y RHF+zod. Lo que el plan no
@@ -39,8 +39,9 @@ paquete unificado (no primitivos por separado), y no hay TypeScript real pese a 
 | `npm run db:update:ts` | Regenera `src/types/supabase.ts` desde el schema remoto (`npx supabase gen types typescript --project-id $npm_config_project`). Requiere pasar `--project` (`npm_config_project`), no lee un `project_id` local — no hay `supabase/config.toml` en este repo. |
 
 No hay `npm test` ni `vitest`: no hay carpeta de tests ni ningún `*.test.*`/`*.spec.*` en
-el repo. `playwright` está en `devDependencies` pero no hay config (`playwright.config.*`)
-ni specs — es una dependencia instalada sin uso activo, no una suite E2E funcionando.
+el repo. No hay `playwright` instalado (se sacó por higiene de dependencias: no tenía
+config ni specs) — si en algún momento se quiere una suite E2E, instalar `@playwright/test`,
+no `playwright`.
 
 ## Estructura del proyecto
 
@@ -155,8 +156,8 @@ gatea tanto la UI (`AdminRoute` en `App.jsx`) como, de fondo, las policies RLS r
    puntualmente de ese archivo. Lo único de `guard-git-db.js` que sigue activo acá es el
    bloqueo genérico de `main` (push directo, `gh pr merge`, `git reset --hard`,
    `git rebase`, `--no-verify`), que es universal a los cuatro proyectos.
-3. **Sin tests de ningún tipo**: ni `vitest` ni specs de `playwright` pese a tenerlo
-   instalado. El gate pre-commit corre solo lint (no hay `vitest` en `devDependencies`
+3. **Sin tests de ningún tipo**: ni `vitest` ni `playwright` (ninguno de los dos está
+   instalado). El gate pre-commit corre solo lint (no hay `vitest` en `devDependencies`
    real que lo dispare... en realidad no hay ninguna suite, así que no hay red de tests
    — no asumir que se puede verificar un cambio corriendo tests).
 4. **`db:update:ts` no es autocontenido**: necesita `npm_config_project` (flag
